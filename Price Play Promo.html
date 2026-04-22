@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price Play — DoorDash</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:ital,wght@0,300;0,400;0,700;0,900;1,900&family=Space+Mono:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="animations.jsx"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+    #root { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ── TIMING ──────────────────────────────────────────────────────────────────
+const DURATION = 20;
+const S = {
+  intro:   { start: 0,    end: 3.2  },
+  name:    { start: 3.2,  end: 6.0  },
+  tagline: { start: 6.0,  end: 8.8  },
+  game:    { start: 8.8,  end: 13.5 },
+  score:   { start: 13.5, end: 16.5 },
+  cta:     { start: 16.5, end: 20.0 },
+};
+
+const BG = {
+  intro:   '#070707',
+  name:    '#FF3008',
+  tagline: '#FFE600',
+  game:    '#CBFF47',
+  score:   '#FF2979',
+  cta:     '#070707',
+};
+
+function screenOf(t) {
+  return Object.keys(S).find(k => t >= S[k].start && t < S[k].end) || 'cta';
+}
+function prog(t, key) {
+  const s = S[key];
+  return Math.max(0, Math.min(1, (t - s.start) / (s.end - s.start)));
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function Reveal({ children, p, delay = 0, style = {} }) {
+  const adj = Math.max(0, Math.min(1, (p - delay) / (1.0001 - delay)));
+  const y = (1 - Easing.easeOutExpo(adj)) * 105;
+  return (
+    <div style={{ overflow: 'hidden', display: 'inline-block', lineHeight: 1 }}>
+      <div style={{ transform: `translateY(${y}%)`, ...style }}>{children}</div>
+    </div>
+  );
+}
+
+function FloatEmoji({ emoji, x, y, size = '80px', seed = 1, t, opacity = 1 }) {
+  const a = seed * 2.1 + 1.1, b = seed * 1.6 + 0.9;
+  const dy = Math.sin(t * a + seed * 5.3) * 18;
+  const dx = Math.cos(t * b + seed * 3.7) * 10;
+  const rot = Math.sin(t * 0.9 + seed * 2.4) * 14;
+  const sc = 0.92 + Math.sin(t * a * 0.55 + seed) * 0.08;
+  return (
+    <div style={{
+      position: 'absolute', left: `${x}%`, top: `${y}%`,
+      fontSize: typeof size === 'number' ? `${size}px` : size,
+      transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(${sc})`,
+      userSelect: 'none', pointerEvents: 'none', opacity,
+    }}>{emoji}</div>
+  );
+}
+
+// ── SCREEN 1: INTRO ──────────────────────────────────────────────────────────
+function ScreenIntro({ t }) {
+  const p = prog(t, 'intro');
+  const inP  = Easing.easeOutExpo(Math.min(1, p * 3.5));
+  const tagP = Easing.easeOutExpo(Math.min(1, Math.max(0, p * 3 - 0.6)));
+  const exitY = Easing.easeInExpo(Math.min(1, Math.max(0, (p - 0.82) / 0.18))) * -140;
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <FloatEmoji emoji="🍕" x={7}  y={12} size="88px" seed={1.1} t={t} opacity={0.4} />
+      <FloatEmoji emoji="🍔" x={78} y={18} size="72px" seed={2.3} t={t} opacity={0.4} />
+      <FloatEmoji emoji="🌮" x={72} y={68} size="80px" seed={3.7} t={t} opacity={0.4} />
+      <FloatEmoji emoji="🍜" x={5}  y={63} size="65px" seed={4.2} t={t} opacity={0.4} />
+      <FloatEmoji emoji="🎮" x={20} y={82} size="70px" seed={5.5} t={t} opacity={0.4} />
+      <FloatEmoji emoji="💰" x={62} y={80} size="60px" seed={6.8} t={t} opacity={0.4} />
+      <FloatEmoji emoji="✨" x={45} y={6}  size="55px" seed={7.2} t={t} opacity={0.35} />
+
+      <div style={{ textAlign: 'center', zIndex: 2, transform: `translateY(${exitY}px)` }}>
+        <div style={{
+          fontFamily: 'Space Grotesk, sans-serif', fontWeight: 300,
+          fontSize: 44, letterSpacing: '0.32em', color: 'rgba(255,255,255,0.45)',
+          textTransform: 'uppercase', marginBottom: 40,
+          opacity: inP,
+          transform: `translateY(${(1 - inP) * 30}px)`,
+        }}>DoorDash Presents</div>
+
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{ transform: `translateY(${(1 - inP) * 108}%)` }}>
+            <div style={{
+              fontFamily: 'Space Grotesk, sans-serif', fontWeight: 300,
+              fontSize: 72, letterSpacing: '0.38em', color: 'rgba(255,255,255,0.75)',
+              textTransform: 'uppercase',
+            }}>Introducing</div>
+          </div>
+        </div>
+
+        <div style={{
+          marginTop: 56, display: 'flex', justifyContent: 'center', gap: 16,
+          opacity: tagP,
+        }}>
+          {['✦','A','N','E','W','F','E','A','T','U','R','E','✦'].map((ch, i) => (
+            <span key={i} style={{
+              fontFamily: 'Space Mono, monospace', fontWeight: 700,
+              fontSize: 28, color: '#FF3008', letterSpacing: '0.05em',
+              opacity: Math.min(1, Math.max(0, (tagP - i * 0.06) * 4)),
+              transform: `translateY(${(1 - Math.min(1, Math.max(0, (tagP - i * 0.06) * 4))) * 20}px)`,
+              display: 'inline-block',
+            }}>{ch}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── SCREEN 2: PRICE PLAY NAME ────────────────────────────────────────────────
+function ScreenName({ t }) {
+  const p = prog(t, 'name');
+  const badgeP = Easing.easeOutBack(Math.min(1, p * 4));
+  const priceP = Easing.easeOutExpo(Math.min(1, p * 2.8));
+  const playP  = Easing.easeOutExpo(Math.min(1, Math.max(0, p * 2.8 - 0.4)));
+  const subP   = Math.min(1, Math.max(0, (p - 0.55) * 3.5));
+  const exitY  = Easing.easeInExpo(Math.min(1, Math.max(0, (p - 0.85) / 0.15))) * -180;
+
+  const bgEmojis = ['🎯','🎲','🃏','🎰','🕹️','🏆','💥','⚡'];
+  const bx = [6, 20, 42, 62, 82, 88, 14, 70];
+  const by = [8, 88, 4, 92, 14, 56, 48, 32];
+  const bsz = [100, 88, 76, 108, 92, 80, 104, 70];
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      {bgEmojis.map((e, i) => (
+        <FloatEmoji key={i} emoji={e} x={bx[i]} y={by[i]} size={`${bsz[i]}px`} seed={i * 1.4 + 0.6} t={t} opacity={0.35} />
+      ))}
+
+      <div style={{ textAlign: 'center', zIndex: 2, transform: `translateY(${exitY}px)` }}>
+        <div style={{
+          display: 'inline-block', background: '#FFE600', color: '#0A0A0A',
+          fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: 38,
+          padding: '14px 36px', letterSpacing: '0.08em', marginBottom: 52,
+          transform: `scale(${badgeP})`, opacity: badgeP,
+        }}>✦ NEW FEATURE ✦</div>
+
+        <div style={{ overflow: 'hidden', display: 'block' }}>
+          <div style={{ transform: `translateY(${(1 - priceP) * 108}%)` }}>
+            <div style={{
+              fontFamily: 'Bebas Neue, sans-serif', fontSize: 280,
+              lineHeight: 0.82, color: '#FFE600', letterSpacing: '-0.01em',
+              textShadow: '0 10px 0 rgba(0,0,0,0.18)',
+            }}>PRICE</div>
+          </div>
+        </div>
+
+        <div style={{ overflow: 'hidden', display: 'block', marginTop: -16 }}>
+          <div style={{ transform: `translateY(${(1 - playP) * 108}%)` }}>
+            <div style={{
+              fontFamily: 'Bebas Neue, sans-serif', fontSize: 280,
+              lineHeight: 0.82, color: '#FFFFFF', letterSpacing: '-0.01em',
+              textShadow: '0 10px 0 rgba(0,0,0,0.12)',
+            }}>PLAY</div>
+          </div>
+        </div>
+
+        <div style={{
+          marginTop: 52, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 500,
+          fontSize: 54, color: 'rgba(255,255,255,0.82)', letterSpacing: '0.04em',
+          opacity: subP, transform: `translateY(${(1 - subP) * 24}px)`,
+        }}>by DoorDash 🔴</div>
+      </div>
+    </div>
+  );
+}
+
+// ── SCREEN 3: TAGLINE ─────────────────────────────────────────────────────────
+function ScreenTagline({ t }) {
+  const p = prog(t, 'tagline');
+  const l1 = Easing.easeOutExpo(Math.min(1, p * 3.5));
+  const l2 = Easing.easeOutExpo(Math.min(1, Math.max(0, p * 3.5 - 0.5)));
+  const l3 = Easing.easeOutExpo(Math.min(1, Math.max(0, p * 3.5 - 1.1)));
+  const subP = Math.min(1, Math.max(0, (p - 0.65) * 3));
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', padding: '0 88px', position: 'relative' }}>
+      <FloatEmoji emoji="🔥" x={72} y={4}  size="110px" seed={1.5} t={t} />
+      <FloatEmoji emoji="💸" x={68} y={74} size="100px" seed={2.2} t={t} />
+      <FloatEmoji emoji="🎯" x={78} y={40} size="90px"  seed={3.8} t={t} />
+
+      <div style={{ overflow: 'hidden' }}>
+        <div style={{ transform: `translateY(${(1 - l1) * 108}%)` }}>
+          <span style={{ fontFamily: 'Bebas Neue', fontSize: 218, color: '#0A0A0A', lineHeight: 0.86, display: 'block' }}>PLAY</span>
+        </div>
+      </div>
+      <div style={{ overflow: 'hidden' }}>
+        <div style={{ transform: `translateY(${(1 - l2) * 108}%)` }}>
+          <span style={{ fontFamily: 'Bebas Neue', fontSize: 218, color: '#FF3008', lineHeight: 0.86, display: 'block' }}>BIG.</span>
+        </div>
+      </div>
+
+      <div style={{ height: 56 }} />
+
+      <div style={{ overflow: 'hidden' }}>
+        <div style={{ transform: `translateY(${(1 - l3) * 108}%)` }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 20 }}>
+            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontStyle: 'italic', fontSize: 98, color: '#0A0A0A' }}>Win</span>
+            <span style={{ fontFamily: 'Bebas Neue', fontSize: 164, color: '#FF3008', lineHeight: 1 }}>BIGGER.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{
+        marginTop: 64, fontFamily: 'Space Grotesk', fontWeight: 400, fontSize: 46,
+        color: '#0A0A0A', lineHeight: 1.45,
+        opacity: subP, transform: `translateY(${(1 - subP) * 28}px)`,
+      }}>
+        Score high,<br />pay less. It's that simple. 💰
+      </div>
+    </div>
+  );
+}
+
+// ── SCREEN 4: GAME ────────────────────────────────────────────────────────────
+const FOOD = ['🍕','🍔','🌮','🍣','🍜','🍗','🍩','🥗','🍦','🌯','🫔','🍱'];
+
+function ScreenGame({ t }) {
+  const p = prog(t, 'game');
+  const gameT = t - S.game.start;
+  const dur = S.game.end - S.game.start;
+
+  // Basket oscillates with increasing speed
+  const speed = 1.8 + p * 1.4;
+  const basketX = 50 + Math.sin(gameT * speed) * 28 + Math.cos(gameT * 0.7) * 10;
+
+  // 14 food items falling in sequence
+  const items = useMemo(() => Array.from({ length: 14 }, (_, i) => {
+    const seed = i * 57.3 + 11;
+    const x = 8 + (seed % 84);
+    return { emoji: FOOD[i % FOOD.length], x, spawnAt: i * (dur / 15), fallDur: 1.6 + (seed % 40) / 100, i };
+  }), []);
+
+  const visibleItems = items.map(item => {
+    const localT = gameT - item.spawnAt;
+    if (localT < 0 || localT > item.fallDur + 0.3) return null;
+    const fp = Math.min(1, localT / item.fallDur);
+    const y = -8 + Easing.easeInQuad(fp) * 108;
+    const caught = Math.abs(item.x - basketX) < 14 && fp > 0.88;
+    const opacity = caught ? Math.max(0, 1 - (fp - 0.88) / 0.1) : 1;
+    return { ...item, y, opacity, fp };
+  }).filter(Boolean);
+
+  const score = Math.round(Easing.easeOutExpo(Math.min(1, p * 1.4)) * 2840);
+  const headerP = Easing.easeOutExpo(Math.min(1, p * 5));
+  const comboShow = p > 0.28 && p < 0.58;
+  const comboOp = comboShow ? Math.sin(((p - 0.28) / 0.3) * Math.PI) : 0;
+
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ position: 'absolute', top: 90, left: 0, right: 0, textAlign: 'center', opacity: headerP, transform: `translateY(${(1 - headerP) * -40}px)` }}>
+        <div style={{ fontFamily: 'Bebas Neue', fontSize: 108, color: '#0A0A0A', lineHeight: 1 }}>CATCH THE FOOD!</div>
+        <div style={{ fontFamily: 'Space Mono', fontSize: 48, color: '#FF3008', fontWeight: 700, marginTop: 6 }}>🎮 PRICE PLAY</div>
+      </div>
+
+      {/* Score badge */}
+      <div style={{
+        position: 'absolute', top: 330, right: 70,
+        fontFamily: 'Space Mono', fontSize: 46, fontWeight: 700,
+        color: '#0A0A0A', background: 'rgba(255,255,255,0.65)',
+        padding: '20px 36px', lineHeight: 1.2,
+        opacity: Math.min(1, p * 4),
+        backdropFilter: 'blur(4px)',
+      }}>
+        SCORE<br />
+        <span style={{ fontSize: 76, color: '#FF3008', fontWeight: 700 }}>{score.toLocaleString()}</span>
+      </div>
+
+      {/* Falling food */}
+      {visibleItems.map(item => (
+        <div key={item.i} style={{
+          position: 'absolute',
+          left: `${item.x}%`, top: `${item.y}%`,
+          fontSize: '92px',
+          transform: `rotate(${Math.sin(item.i * 1.9) * 18}deg)`,
+          opacity: item.opacity,
+          pointerEvents: 'none', userSelect: 'none',
+        }}>{item.emoji}</div>
+      ))}
+
+      {/* COMBO flash */}
+      {comboShow && (
+        <div style={{
+          position: 'absolute', top: '44%', left: '8%',
+          fontFamily: 'Bebas Neue', fontSize: 110, color: '#FF3008',
+          opacity: comboOp,
+          transform: `scale(${0.85 + comboOp * 0.18}) rotate(-4deg)`,
+          letterSpacing: '0.02em',
+          textShadow: '4px 4px 0 rgba(0,0,0,0.15)',
+        }}>COMBO! 🔥</div>
+      )}
+
+      {/* Level up flash */}
+      {p > 0.65 && p < 0.8 && (
+        <div style={{
+          position: 'absolute', top: '38%', right: '6%',
+          fontFamily: 'Bebas Neue', fontSize: 96, color: '#070707',
+          opacity: Math.sin(((p - 0.65) / 0.15) * Math.PI),
+          transform: `rotate(6deg)`,
+        }}>LEVEL UP ⬆</div>
+      )}
+
+      {/* Basket */}
+      <div style={{
+        position: 'absolute', bottom: 170,
+        left: `${basketX}%`,
+        transform: 'translateX(-50%)',
+        fontSize: '124px',
+        filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.18))',
+      }}>🛒</div>
+
+      {/* Ground */}
+      <div style={{ position: 'absolute', bottom: 148, left: 50, right: 50, height: 3, background: 'rgba(7,7,7,0.25)' }} />
+    </div>
+  );
+}
+
+// ── SCREEN 5: SCORE REVEAL ────────────────────────────────────────────────────
+function ScreenScore({ t }) {
+  const p = prog(t, 'score');
+  const ph1 = Math.min(1, p / 0.38);
+  const ph2 = Math.min(1, Math.max(0, (p - 0.42) / 0.58));
+  const scoreNum = Math.round(Easing.easeOutExpo(Math.min(1, ph1 * 2.2)) * 2840);
+  const discScale = Easing.easeOutBack(Math.min(1, ph2 * 2));
+
+  const confetti = ['🎉','🎊','✨','⭐','🏆','💫','🌟','🎯'];
+  const cx = [5,22,42,60,76,88,12,52];
+  const cy = [12,82,6,88,18,58,44,72];
+  const cs = [80,70,60,90,84,65,74,55];
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      {ph2 > 0 && confetti.map((e, i) => (
+        <FloatEmoji key={i} emoji={e} x={cx[i]} y={cy[i]} size={`${cs[i]}px`} seed={i * 0.87 + 0.4} t={t} opacity={ph2} />
+      ))}
+
+      <div style={{ textAlign: 'center', zIndex: 2 }}>
+        <div style={{
+          fontFamily: 'Space Grotesk', fontWeight: 300, fontSize: 66,
+          color: 'rgba(255,255,255,0.82)', letterSpacing: '0.1em', textTransform: 'uppercase',
+          opacity: Math.min(1, ph1 * 4), transform: `translateY(${(1 - Math.min(1, ph1 * 4)) * 30}px)`,
+        }}>You scored</div>
+
+        <div style={{
+          fontFamily: 'Bebas Neue', fontSize: 340, color: '#FFE600',
+          lineHeight: 0.82, textShadow: '0 14px 48px rgba(0,0,0,0.22)',
+          opacity: Math.min(1, ph1 * 2.5),
+        }}>{scoreNum.toLocaleString()}</div>
+
+        <div style={{
+          width: 180, height: 3, background: 'rgba(255,255,255,0.35)',
+          margin: '28px auto 32px', opacity: Math.min(1, ph1 * 4),
+        }} />
+
+        {ph2 > 0 && (
+          <div style={{ transform: `scale(${discScale})`, opacity: ph2 }}>
+            <div style={{
+              fontFamily: 'Space Grotesk', fontWeight: 300, fontSize: 56,
+              color: 'rgba(255,255,255,0.82)', letterSpacing: '0.15em', textTransform: 'uppercase',
+            }}>That's</div>
+            <div style={{
+              fontFamily: 'Bebas Neue', fontSize: 400, lineHeight: 0.82,
+              background: 'linear-gradient(140deg, #FFE600 30%, #fff)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.02em',
+            }}>40%</div>
+            <div style={{
+              fontFamily: 'Bebas Neue', fontSize: 172, color: '#FFE600',
+              letterSpacing: '0.04em', marginTop: -36,
+            }}>OFF YOUR ORDER</div>
+            <div style={{ fontSize: 88, marginTop: 28 }}>🎉🎊🎉</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── SCREEN 6: CTA ─────────────────────────────────────────────────────────────
+function ScreenCTA({ t }) {
+  const p = prog(t, 'cta');
+  const l1 = Easing.easeOutExpo(Math.min(1, p * 4.5));
+  const l2 = Easing.easeOutExpo(Math.min(1, Math.max(0, p * 4.5 - 0.55)));
+  const l3 = Easing.easeOutExpo(Math.min(1, Math.max(0, p * 4.5 - 1.1)));
+  const btnP = Easing.easeOutBack(Math.min(1, Math.max(0, (p - 0.62) / 0.38)));
+  const subP = Math.min(1, Math.max(0, (p - 0.82) * 5));
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <FloatEmoji emoji="🔴" x={4}  y={5}  size="86px" seed={1.3} t={t} opacity={0.5} />
+      <FloatEmoji emoji="🍕" x={78} y={7}  size="96px" seed={2.1} t={t} opacity={0.5} />
+      <FloatEmoji emoji="🏆" x={7}  y={76} size="88px" seed={3.6} t={t} opacity={0.5} />
+      <FloatEmoji emoji="💰" x={76} y={74} size="84px" seed={4.9} t={t} opacity={0.5} />
+
+      <div style={{ textAlign: 'center', zIndex: 2 }}>
+        <div style={{ overflow: 'hidden', marginBottom: 8 }}>
+          <div style={{ transform: `translateY(${(1 - l1) * 108}%)` }}>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 58, color: '#FF3008', letterSpacing: '0.2em', textTransform: 'uppercase' }}>DoorDash</div>
+          </div>
+        </div>
+
+        {[['ORDER.', '#FFE600'], ['PLAY.', '#FF2979'], ['SAVE.', '#CBFF47']].map(([word, color], i) => {
+          const lp = [l1, l2, l3][i];
+          return (
+            <div key={i} style={{ overflow: 'hidden' }}>
+              <div style={{ transform: `translateY(${(1 - lp) * 108}%)` }}>
+                <div style={{
+                  fontFamily: 'Bebas Neue', fontSize: 210, color,
+                  lineHeight: 0.86, display: 'block',
+                  textShadow: '5px 5px 0 rgba(0,0,0,0.28)',
+                }}>{word}</div>
+              </div>
+            </div>
+          );
+        })}
+
+        <div style={{
+          marginTop: 76,
+          display: 'inline-block', background: '#FF3008', color: '#fff',
+          fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 54,
+          padding: '30px 84px', letterSpacing: '0.04em',
+          transform: `scale(${btnP})`, opacity: btnP,
+          boxShadow: '0 24px 64px rgba(255,48,8,0.5)',
+        }}>Play Now →</div>
+
+        <div style={{
+          marginTop: 44, fontFamily: 'Space Mono', fontSize: 34,
+          color: 'rgba(255,255,255,0.38)', letterSpacing: '0.04em',
+          opacity: subP,
+        }}>Available in the DoorDash app</div>
+      </div>
+    </div>
+  );
+}
+
+// ── TRANSITION FLASH ──────────────────────────────────────────────────────────
+function Flash({ t }) {
+  const cuts = Object.values(S).map(s => s.start).filter(s => s > 0);
+  const nearest = Math.min(...cuts.map(c => Math.abs(t - c)));
+  if (nearest > 0.1) return null;
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: '#fff',
+      opacity: Math.max(0, 1 - nearest / 0.07) * 0.88,
+      zIndex: 60, pointerEvents: 'none',
+    }} />
+  );
+}
+
+// ── SCREEN LABEL ─────────────────────────────────────────────────────────────
+const LABELS = { intro: '01 Intro', name: '02 Price Play', tagline: '03 Play Big Win Bigger', game: '04 Game', score: '05 Score Reveal', cta: '06 CTA' };
+
+// ── MAIN ──────────────────────────────────────────────────────────────────────
+function PricePlayPromo() {
+  const t = useTime();
+  const screen = screenOf(t);
+  const bg = BG[screen];
+
+  return (
+    <div data-screen-label={LABELS[screen]} style={{ width: '100%', height: '100%', background: bg, position: 'relative', overflow: 'hidden' }}>
+      {screen === 'intro'   && <ScreenIntro   t={t} />}
+      {screen === 'name'    && <ScreenName    t={t} />}
+      {screen === 'tagline' && <ScreenTagline t={t} />}
+      {screen === 'game'    && <ScreenGame    t={t} />}
+      {screen === 'score'   && <ScreenScore   t={t} />}
+      {screen === 'cta'     && <ScreenCTA     t={t} />}
+      <Flash t={t} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Stage width={1080} height={1920} duration={DURATION} background="#070707">
+    <PricePlayPromo />
+  </Stage>
+);
+</script>
+</body>
+</html>

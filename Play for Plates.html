@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Play for Plates — DoorDash</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=DM+Sans:opsz,ital,wght@9..40,0,200;9..40,0,400;9..40,0,700;9..40,0,900;9..40,1,900&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="animations.jsx"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;}
+#root{width:100%;height:100%;}
+</style>
+</head>
+<body><div id="root"></div>
+<script type="text/babel">
+const {useRef,useMemo} = React;
+
+/* ─── palette ─── */
+const RED    = '#FF3008';
+const LIME   = '#C8FF47';
+const YELLOW = '#FFE600';
+const PINK   = '#FF2979';
+const WHITE  = '#FFFFFF';
+const LOGO   = 'uploads/pasted-1776883533204-0.png';
+const DM     = '"DM Sans",-apple-system,BlinkMacSystemFont,sans-serif';
+const BANG   = '"Bangers",cursive';
+const MONO   = '"Space Mono",monospace';
+const TOTAL  = 25;
+
+/* ─── math ─── */
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const nm=(t,s,e)=>cl((t-s)/(e-s),0,1);
+const lr=(a,b,t)=>a+(b-a)*t;
+function eop(t,s,e){return Easing.easeOutExpo(nm(t,s,e));}
+function eob(t,s,e){return Easing.easeOutBack(nm(t,s,e));}
+function eio(t,s,e){return Easing.easeInOutExpo(nm(t,s,e));}
+function eiq(t,s,e){return Easing.easeInOutQuad(nm(t,s,e));}
+
+/* ══════════════════════════════════════════════════════
+   FRAME 1 — White + logo + quirky text reveal   0–5.5s
+══════════════════════════════════════════════════════ */
+function Frame1({t}){
+  const logoIn   = eob(t, 0.1, 1.1);
+  const logoMov  = eio(t, 1.8, 3.0);   // logo drifts top-left
+  const exitP    = eio(t, 5.1, 5.6);
+
+  // Color blobs that appear progressively
+  const blobs = [
+    {color:RED,   x:'72%',  y:'10%', w:340, h:260, d:1.2},
+    {color:LIME,  x:'5%',   y:'55%', w:220, h:200, d:1.6},
+    {color:YELLOW,x:'60%',  y:'72%', w:280, h:200, d:2.0},
+    {color:PINK,  x:'82%',  y:'42%', w:190, h:190, d:2.4},
+  ];
+
+  // Quirky typewriter words
+  const words = [
+    {text:'Wait.', font:BANG, size:180, color:RED,    x:'11%', y:'18%', delay:1.9, dur:0.35},
+    {text:'Something', font:DM,   size:88,  color:'#111', x:'9%',  y:'36%', delay:2.4, dur:0.4,  weight:900, italic:true},
+    {text:'just',      font:BANG, size:130, color:RED,    x:'38%', y:'36%', delay:2.7, dur:0.3},
+    {text:'arrived.',  font:DM,   size:88,  color:'#111', x:'9%',  y:'56%', delay:3.0, dur:0.4,  weight:900},
+    {text:'for',       font:DM,   size:52,  color:'rgba(0,0,0,0.32)', x:'9%', y:'69%', delay:3.4, dur:0.4, weight:300, letter:'0.22em'},
+    {text:'YOU.',      font:BANG, size:160, color:PINK,   x:'9%',  y:'76%', delay:3.55, dur:0.35},
+    {text:'→',         font:BANG, size:110, color:PINK,   x:'54%', y:'78%', delay:3.7,  dur:0.3},
+  ];
+
+  return (
+    <div style={{width:'100%',height:'100%',background:WHITE,position:'relative',overflow:'hidden',opacity:1-exitP}}>
+      {/* subtle grid */}
+      <div style={{position:'absolute',inset:0,backgroundImage:`linear-gradient(rgba(0,0,0,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03) 1px,transparent 1px)`,backgroundSize:'64px 64px'}}/>
+
+      {/* right-side feature callout */}
+      <div style={{
+        position:'absolute', right:'6%', top:'50%',
+        transform:'translateY(-50%)',
+        opacity: eop(t,3.0,4.0),
+        zIndex:5,
+      }}>
+        <div style={{fontFamily:MONO,fontSize:18,color:'rgba(0,0,0,0.22)',letterSpacing:'0.24em',textTransform:'uppercase',marginBottom:28,writingMode:'vertical-rl',transform:'rotate(180deg)',height:280,display:'flex',alignItems:'center',justifyContent:'center'}}>Play · For · Plates · 2025</div>
+        <div style={{width:2,height:200,background:`linear-gradient(${RED},${PINK})`,margin:'0 auto',opacity:0.35}}/>  
+      </div>
+      {/* color blobs */}
+      {blobs.map((b,i)=>{
+        const bp = eop(t, b.d, b.d+0.6);
+        return (
+          <div key={i} style={{
+            position:'absolute', left:b.x, top:b.y,
+            width:b.w, height:b.h,
+            borderRadius:'50%',
+            background:b.color,
+            opacity: bp*0.18,
+            filter:'blur(60px)',
+            transform:`scale(${0.5+bp*0.5})`,
+          }}/>
+        );
+      })}
+
+      {/* DoorDash logo — starts center, moves to top-left */}
+      <div style={{
+        position:'absolute',
+        left: lr(50, 7, logoMov)+'%',
+        top:  lr(50, 7, logoMov)+'%',
+        transform:`translate(${logoMov>0.5?'0':'-50%'},${logoMov>0.5?'0':'-50%'}) scale(${lr(1.0,0.6,logoMov)*logoIn})`,
+        opacity: logoIn,
+        display:'flex',flexDirection:'column',alignItems:'center',gap:16,
+        transition:'none',
+        zIndex:10,
+      }}>
+        <img src={LOGO} style={{width:lr(280,130,logoMov),height:lr(280,130,logoMov),objectFit:'contain'}}/>
+        <div style={{fontFamily:DM,fontWeight:800,fontSize:lr(42,22,logoMov),letterSpacing:'0.16em',color:'#111',opacity:eop(t,1.0,1.9)}}> DOORDASH</div>
+      </div>
+
+      {/* Quirky text words */}
+      {words.map((w,i)=>{
+        const wp = eob(t, w.delay, w.delay+w.dur);
+        return (
+          <div key={i} style={{
+            position:'absolute',
+            left: w.x, top: w.y,
+            fontFamily:w.font, fontWeight:w.weight||400,
+            fontSize:w.size, color:w.color,
+            letterSpacing:w.letter||'-0.01em',
+            fontStyle:w.italic?'italic':'normal',
+            lineHeight:1,
+            opacity: wp,
+            transform:`translateY(${(1-wp)*28}px) rotate(${(1-wp)*-3}deg)`,
+            zIndex:20,
+          }}>{w.text}</div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   TRANSITION A — Diagonal color shard wipe  5.0–6.2s
+══════════════════════════════════════════════════════ */
+function TransitionA({t}){
+  const shards=[
+    {color:RED,   delay:0,    skew:-14, top:'-40%', h:'65%'},
+    {color:YELLOW,delay:0.05, skew:-18, top:'-8%',  h:'60%'},
+    {color:PINK,  delay:0.10, skew:-14, top:'25%',  h:'55%'},
+    {color:RED,   delay:0.14, skew:-16, top:'55%',  h:'60%'},
+    {color:YELLOW,delay:0.18, skew:-12, top:'82%',  h:'50%'},
+  ];
+  return shards.map((s,i)=>{
+    const raw = nm(t,5.0,6.6);
+    const sp = Easing.easeInOutExpo(cl((raw-s.delay)/0.72,0,1));
+    if(sp<=0||sp>=1) return null;
+    return (
+      <div key={i} style={{
+        position:'absolute', top:s.top, left:0,
+        height:s.h, width:'165%', background:s.color,
+        transform:`skewY(${s.skew}deg) translateX(${lr(-115,125,sp)}%)`,
+        transformOrigin:'left center', zIndex:50,
+      }}/>
+    );
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   FRAME 2 — PLAY FOR PLATES on RED    6.0–12.0s
+══════════════════════════════════════════════════════ */
+function Frame2({t}){
+  const exitP = eio(t, 11.4, 12.1);
+  const words = [
+    {w:'PLAY',  d:6.3, color:WHITE},
+    {w:'FOR',   d:6.7, color:YELLOW},
+    {w:'PLATES',d:7.1, color:WHITE},
+  ];
+  const subP  = eop(t, 7.8, 8.8);
+  const tagP  = eop(t, 8.8, 9.6);
+
+  return (
+    <div style={{width:'100%',height:'100%',background:RED,position:'relative',overflow:'hidden',display:'flex',alignItems:'center'}}>
+      {/* big ghost P */}
+      <div style={{
+        position:'absolute',right:-80,top:-120,
+        fontFamily:BANG,fontSize:900,color:'rgba(255,255,255,0.07)',
+        lineHeight:1,pointerEvents:'none',userSelect:'none',
+        transform:`translateX(${exitP*80}px)`,
+      }}>P</div>
+
+      {/* left content */}
+      <div style={{padding:'0 120px 0 120px',position:'relative',zIndex:5,width:'100%',transform:`translateX(${-exitP*60}px)`}}>
+        {/* eyebrow */}
+        <div style={{fontFamily:MONO,fontSize:20,color:'rgba(255,255,255,0.50)',letterSpacing:'0.24em',textTransform:'uppercase',marginBottom:40,opacity:eop(t,6.1,6.5)}}>
+          DoorDash — New Feature
+        </div>
+
+        {/* words */}
+        {words.map(({w,d,color})=>{
+          const wp = eob(t, d, d+0.5);
+          return (
+            <div key={w} style={{overflow:'hidden',display:'block'}}>
+              <div style={{
+                fontFamily:BANG,fontSize:120,lineHeight:0.88,
+                color,letterSpacing:'0.01em',
+                transform:`translateY(${(1-wp)*108}%)`,
+                display:'block',
+              }}>{w}</div>
+            </div>
+          );
+        })}
+
+        {/* subtitle */}
+        <div style={{
+          marginTop:48,fontFamily:DM,fontWeight:300,fontSize:44,
+          color:'rgba(255,255,255,0.82)',lineHeight:1.55,
+          opacity:subP,transform:`translateY(${(1-subP)*20}px)`,
+        }}>Play games.<br/><span style={{fontWeight:800,color:WHITE}}>Win real discounts.</span></div>
+
+        {/* score pill */}
+        <div style={{
+          marginTop:48,display:'inline-flex',alignItems:'center',gap:18,
+          padding:'18px 40px',background:'rgba(255,255,255,0.14)',
+          borderRadius:60,border:'1.5px solid rgba(255,255,255,0.25)',
+          opacity:tagP,transform:`translateY(${(1-tagP)*16}px)`,
+        }}>
+          <div style={{width:12,height:12,borderRadius:'50%',background:YELLOW,boxShadow:`0 0 14px ${YELLOW}`}}/>
+          <span style={{fontFamily:MONO,fontSize:20,color:WHITE,letterSpacing:'0.10em'}}>SCORE HIGH — PAY LESS</span>
+        </div>
+      </div>
+
+      {/* right side vertical type */}
+      <div style={{
+        position:'absolute',right:80,top:'50%',
+        transform:`translateY(-50%) rotate(90deg)`,
+        fontFamily:DM,fontWeight:700,fontSize:18,
+        color:'rgba(255,255,255,0.18)',letterSpacing:'0.32em',textTransform:'uppercase',
+        whiteSpace:'nowrap',opacity:tagP,
+      }}>Play for Plates — DoorDash — 2025</div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   TRANSITION B — James Bond iris  11.8–13.0s
+══════════════════════════════════════════════════════ */
+function TransitionB({t}){
+  if(t < 11.8 || t >= 13.05) return null;
+  const close = eio(t, 11.8, 12.45);
+  const open  = eio(t, 12.45, 13.05);
+
+  const rClose = lr(200, 0, close);
+  const rOpen  = lr(0, 200, open);
+  const r      = close < 1 ? rClose : rOpen;
+  const bg     = close < 1 ? RED : LIME;
+
+  return (
+    <div style={{
+      position:'absolute',inset:0,zIndex:55,
+      background: bg,
+      clipPath:`circle(${r}vmax at 50% 50%)`,
+      pointerEvents:'none',
+    }}>
+      {/* concentric ring for bond effect */}
+      <div style={{
+        position:'absolute',top:'50%',left:'50%',
+        width:`${r*2+6}vmax`,height:`${r*2+6}vmax`,
+        border:`3px solid rgba(0,0,0,0.25)`,
+        borderRadius:'50%',
+        transform:'translate(-50%,-50%)',
+      }}/>
+      <div style={{
+        position:'absolute',top:'50%',left:'50%',
+        width:`${r*2+16}vmax`,height:`${r*2+16}vmax`,
+        border:`1px solid rgba(0,0,0,0.12)`,
+        borderRadius:'50%',
+        transform:'translate(-50%,-50%)',
+      }}/>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   MEMORY CARDS — Apple-style emojis
+══════════════════════════════════════════════════════ */
+const EMOJIS = ['🦄','🍕','🌮','🍔','🍣','🍩'];
+const CARDS  = [...EMOJIS,...EMOJIS];
+
+const FLIPS = [
+  {card:0,  t:0.5},  // 🦄
+  {card:6,  t:1.0},  // 🦄 → MATCH
+  {card:2,  t:1.7},  // 🌮
+  {card:9,  t:2.2},  // 🍔 no match
+  {card:9,  t:2.7},  // flip back
+  {card:2,  t:2.8},  // flip back
+  {card:1,  t:3.3},  // 🍕
+  {card:7,  t:3.8},  // 🍕 → MATCH
+  {card:4,  t:4.4},  // 🍣
+  {card:10, t:4.9},  // 🍣 → MATCH
+  {card:3,  t:5.5},  // 🍔
+  {card:9,  t:6.0},  // 🍔 → MATCH
+];
+
+function MemCard({emoji,state,flashAge}){
+  const face = state==='face'||state==='matched';
+  const glow = state==='matched';
+  const popS = glow && flashAge<0.6 ? 1+Easing.easeOutBack(cl(1-flashAge/0.6,0,1))*0.14 : 1;
+  return (
+    <div style={{width:118,height:148,perspective:700,transform:`scale(${popS})`}}>
+      <div style={{
+        width:'100%',height:'100%',position:'relative',
+        transformStyle:'preserve-3d',
+        transform:`rotateY(${face?180:0}deg)`,
+        transition:'transform 0.38s cubic-bezier(0.4,0,0.2,1)',
+      }}>
+        {/* BACK */}
+        <div style={{
+          position:'absolute',inset:0,backfaceVisibility:'hidden',
+          background:'rgba(255,255,255,0.15)',
+          borderRadius:20,border:'1.5px solid rgba(255,255,255,0.25)',
+          display:'flex',alignItems:'center',justifyContent:'center',
+          boxShadow:'0 6px 24px rgba(0,0,0,0.15)',
+        }}>
+          <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,0.18)',border:'1.5px solid rgba(255,255,255,0.20)'}}/>
+        </div>
+        {/* FACE */}
+        <div style={{
+          position:'absolute',inset:0,backfaceVisibility:'hidden',
+          transform:'rotateY(180deg)',
+          background: glow ? 'rgba(255,255,255,0.96)' : WHITE,
+          borderRadius:20,
+          border: glow ? `2.5px solid ${RED}` : '1.5px solid rgba(0,0,0,0.06)',
+          display:'flex',alignItems:'center',justifyContent:'center',
+          fontSize:80,
+          boxShadow: glow ? `0 0 0 4px ${RED}55, 0 12px 48px ${RED}44` : '0 8px 28px rgba(0,0,0,0.20)',
+        }}>{emoji}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   FRAME 3 — GAME SCREEN  13.0–20.0s  LIME bg
+══════════════════════════════════════════════════════ */
+function Frame3({t}){
+  const gs  = 13.0;
+  const gT  = t - gs;
+  const headerIn = eop(t, 13.0, 13.8);
+  const exitP    = eio(t, 19.3, 20.1);
+
+  // compute states inline every frame
+  let _s = CARDS.map(()=>'down');
+  FLIPS.forEach(f=>{
+    if(gT < f.t) return;
+    if(_s[f.card]==='matched') return;
+    _s[f.card] = _s[f.card]==='down' ? 'face' : 'down';
+    const fi = _s.map((st,i)=>st==='face'?i:null).filter(x=>x!==null);
+    if(fi.length===2){ const [a,b]=fi; if(CARDS[a]===CARDS[b]){_s[a]='matched';_s[b]='matched';} }
+  });
+  const states = _s;
+  const matchedCount = states.filter(x=>x==='matched').length/2;
+  const score = Math.floor(matchedCount)*350;
+  const popScale = score>0 ? 1.12 : 1;
+
+  const matchFlashAge = CARDS.map((_,i)=>{
+    if(states[i]!=='matched') return 99;
+    const matchFlip = FLIPS.slice().reverse().find(f=>f.card===i && gT>f.t);
+    return matchFlip ? gT - matchFlip.t : 99;
+  });
+
+  return (
+    <div style={{
+      width:'100%',height:'100%',background:LIME,
+      position:'relative',overflow:'hidden',
+      opacity: 1-exitP,
+    }}>
+      {/* decorative circles */}
+      <div style={{position:'absolute',right:-120,top:-120,width:500,height:500,borderRadius:'50%',background:'rgba(255,255,255,0.25)',pointerEvents:'none'}}/>
+      <div style={{position:'absolute',left:-80,bottom:-100,width:360,height:360,borderRadius:'50%',background:'rgba(255,48,8,0.12)',pointerEvents:'none'}}/>
+
+      {/* LEFT — big score */}
+      <div style={{
+        position:'absolute',left:0,top:0,bottom:0,width:480,
+        display:'flex',flexDirection:'column',
+        justifyContent:'center',padding:'0 60px 0 80px',
+        transform:`translateX(${-exitP*50}px)`,
+        opacity:headerIn,
+      }}>
+        {/* DD logo tiny */}
+        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:40}}>
+          <div style={{width:40,height:40,background:RED,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <img src={LOGO} style={{width:32,height:32,objectFit:'contain'}}/>
+          </div>
+          <span style={{fontFamily:DM,fontWeight:700,fontSize:16,color:'rgba(0,0,0,0.55)',letterSpacing:'0.12em',textTransform:'uppercase'}}>DoorDash</span>
+        </div>
+
+        <div style={{fontFamily:BANG,fontSize:82,lineHeight:0.9,color:'#111',letterSpacing:'0.01em',marginBottom:28}}>
+          Play for<br/><span style={{color:RED}}>Plates</span>
+        </div>
+        <div style={{fontFamily:DM,fontWeight:300,fontSize:22,color:'rgba(0,0,0,0.55)',lineHeight:1.5,marginBottom:52}}>Match the pairs.<br/>Watch your discount grow.</div>
+
+        {/* BIG SCORE */}
+        <div style={{
+          background:RED,borderRadius:28,padding:'28px 36px',
+          boxShadow:`0 20px 60px ${RED}55`,
+          transform:`scale(${popScale})`,transformOrigin:'left center',
+        }}>
+          <div style={{fontFamily:MONO,fontSize:15,color:'rgba(255,255,255,0.65)',letterSpacing:'0.20em',textTransform:'uppercase',marginBottom:8}}>Score</div>
+          <div style={{fontFamily:BANG,fontSize:160,lineHeight:0.85,color:WHITE,letterSpacing:'-0.01em'}}>{score}</div>
+          <div style={{marginTop:10,fontFamily:DM,fontWeight:700,fontSize:18,color:'rgba(255,255,255,0.7)',opacity:score>0?1:0}}>
+            {score>=700?'Earning 30% OFF! 🎉':score>=350?'Keep going →':''}
+          </div>
+        </div>
+
+        {/* progress */}
+        <div style={{display:'flex',gap:8,marginTop:28}}>
+          {EMOJIS.map((_,i)=>(
+            <div key={i} style={{flex:1,height:5,borderRadius:4,background:i<matchedCount?RED:'rgba(0,0,0,0.15)',transition:'background 0.3s ease'}}/>
+          ))}
+        </div>
+        <div style={{marginTop:10,fontFamily:DM,fontSize:14,color:'rgba(0,0,0,0.45)',fontWeight:600}}>{matchedCount}/{EMOJIS.length} pairs</div>
+      </div>
+
+      {/* RIGHT — card grid */}
+      <div style={{position:'absolute',left:480,top:0,right:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center',padding:'32px 48px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,152px)',gridTemplateRows:'repeat(3,190px)',gap:22}}>
+          {CARDS.map((emoji,i)=>{
+            const cardIn = eop(t, 13.1+i*0.06, 13.7+i*0.06);
+            return (
+              <div key={i} style={{opacity:cardIn,transform:`scale(${0.65+cardIn*0.35}) translateY(${(1-cardIn)*20}px)`}}>
+                <MemCard emoji={emoji} state={states[i]} flashAge={matchFlashAge[i]}/>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   TRANSITION C — color strobe + circle burst  19.6–21.0s
+══════════════════════════════════════════════════════ */
+function TransitionC({t}){
+  if(t < 19.6 || t >= 20.9) return null;
+  const p  = nm(t,19.6,20.9);
+  const ep = Easing.easeInOutExpo(p);
+  const r  = lr(0,200,ep);
+  const cols=[RED,YELLOW,PINK,WHITE];
+  const col = cols[Math.floor(Math.min(p*3.99,3.99))%4];
+  return (
+    <div style={{
+      position:'absolute',inset:0,zIndex:55,
+      background:col,
+      clipPath:`circle(${r}vmax at 50% 50%)`,
+      pointerEvents:'none',
+    }}/>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   FRAME 4 — ENDING  21.0–25.0s   HOT PINK bg
+══════════════════════════════════════════════════════ */
+function Frame4({t}){
+  const p  = nm(t,21.0,25.0);
+  const l1 = eob(t, 21.1, 21.65);
+  const l2 = eob(t, 21.5, 22.1);
+  const l3 = eop(t, 22.0, 22.7);
+  const sub= eop(t, 22.6, 23.4);
+  const tag= eop(t, 23.2, 23.9);
+
+  return (
+    <div style={{width:'100%',height:'100%',background:PINK,position:'relative',overflow:'hidden',display:'flex',alignItems:'center'}}>
+      {/* ghost text bg */}
+      <div style={{
+        position:'absolute',right:-60,bottom:-140,
+        fontFamily:BANG,fontSize:700,color:'rgba(255,255,255,0.10)',
+        lineHeight:1,userSelect:'none',letterSpacing:'-0.02em',
+      }}>WIN</div>
+
+      {/* circle accent top right */}
+      <div style={{position:'absolute',top:-100,right:-100,width:500,height:500,borderRadius:'50%',background:'rgba(255,255,255,0.14)'}}/>
+      <div style={{position:'absolute',top:60,right:60,width:280,height:280,borderRadius:'50%',background:'rgba(255,48,8,0.22)'}}/>
+
+      <div style={{padding:'0 120px',position:'relative',zIndex:5}}>
+        {/* eyebrow */}
+        <div style={{fontFamily:MONO,fontSize:20,color:'rgba(255,255,255,0.55)',letterSpacing:'0.22em',textTransform:'uppercase',marginBottom:44,opacity:eop(t,21.0,21.3)}}>
+          DoorDash — Play for Plates
+        </div>
+
+        {/* Headline stacked */}
+        <div style={{overflow:'hidden',display:'block'}}>
+          <div style={{transform:`translateY(${(1-l1)*108}%)`,fontFamily:BANG,fontSize:210,lineHeight:0.86,color:WHITE,display:'block',letterSpacing:'0.01em'}}>EXCITING</div>
+        </div>
+        <div style={{overflow:'hidden',display:'block'}}>
+          <div style={{transform:`translateY(${(1-l2)*108}%)`,display:'flex',alignItems:'center',gap:28}}>
+            <span style={{fontFamily:BANG,fontSize:210,lineHeight:0.86,color:YELLOW,letterSpacing:'0.01em'}}>OFFERS</span>
+            <span style={{fontFamily:DM,fontWeight:900,fontStyle:'italic',fontSize:100,color:'rgba(255,255,255,0.7)',lineHeight:0.9}}>await.</span>
+          </div>
+        </div>
+
+        {/* sub */}
+        <div style={{
+          marginTop:52,fontFamily:DM,fontWeight:300,fontSize:46,
+          color:'rgba(255,255,255,0.85)',lineHeight:1.45,
+          opacity:sub,transform:`translateY(${(1-sub)*24}px)`,
+        }}>
+          Play big.<br/>
+          <span style={{fontWeight:900,color:WHITE}}>Win bigger.</span>
+        </div>
+
+        {/* DD tag */}
+        <div style={{
+          marginTop:52,display:'flex',alignItems:'center',gap:24,
+          opacity:tag,transform:`translateY(${(1-tag)*16}px)`,
+        }}>
+          <div style={{width:52,height:52,background:WHITE,borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 32px rgba(0,0,0,0.15)'}}>
+            <img src={LOGO} style={{width:34,height:34,objectFit:'contain'}}/>
+          </div>
+          <div style={{fontFamily:DM,fontWeight:800,fontSize:28,color:WHITE,letterSpacing:'0.08em'}}>DOORDASH</div>
+          <div style={{width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.5)'}}/>
+          <div style={{fontFamily:MONO,fontSize:20,color:'rgba(255,255,255,0.65)',letterSpacing:'0.12em'}}>2025</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════
+   ROOT
+══════════════════════════════════════════════════════ */
+function PlayForPlates(){
+  const t = useTime();
+  return (
+    <div style={{width:'100%',height:'100%',position:'relative',overflow:'hidden',background:WHITE}}>
+      <div style={{position:'absolute',inset:0,display:(t>=5.5&&t<12.2)?'block':'none'}}><Frame2 t={t}/></div>
+      <div style={{position:'absolute',inset:0,display:t<6.5?'block':'none'}}><Frame1 t={t}/></div>
+      <div style={{position:'absolute',inset:0,display:(t>=12.6&&t<20.2)?'block':'none'}}><Frame3 t={t}/></div>
+      <div style={{position:'absolute',inset:0,zIndex:10,display:t>=20.9?'block':'none'}}><Frame4 t={t}/></div>
+      <TransitionA t={t}/>
+      <TransitionB t={t}/>
+      <TransitionC t={t}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <Stage width={1920} height={1080} duration={TOTAL} background={WHITE}>
+    <PlayForPlates/>
+  </Stage>
+);
+</script>
+</body>
+</html>
