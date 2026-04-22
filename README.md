@@ -25,8 +25,14 @@ Simply open `index.html` in a modern web browser.
 - CSS Grid & Flexbox
 - Custom animation framework
 
-## Deployment
-Deployed on GitHub Pages. Visit: [https://shreyas70773.github.io/doordash-promo/](https://shreyas70773.github.io/doordash-promo/)
+## Deployment (GitHub Pages)
+This repo includes a GitHub Actions workflow at `.github/workflows/deploy.yml` to deploy the static site to GitHub Pages.
+
+1. Go to **Settings → Pages** and set **Source** to **GitHub Actions**.
+2. Merge this branch into `main`.
+3. The workflow will publish the site automatically on each push to `main`.
+
+Published URL: [https://shreyas70773.github.io/doordash-promo/](https://shreyas70773.github.io/doordash-promo/)
 
 ---
 
